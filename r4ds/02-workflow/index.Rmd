@@ -1,0 +1,156 @@
+---
+title: "Workflow Básico"
+subtitle: "Boas práticas"  
+author: 
+  - "Beatriz Milz"
+  - "Grupo de estudos - R-Ladies São Paulo"
+date: '07 de julho de 2021'
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: true
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  fig.align = "center",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  fig.show = TRUE,
+  hiline = TRUE
+)
+```
+
+```{css echo=FALSE}
+.remark-slide-content{
+  font-size: 1.2rem;
+}
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+# library(xaringanthemer)
+# style_duo_accent(
+#   primary_color = "#1381B0",
+#   secondary_color = "#FF961C",
+#   inverse_header_color = "#FFFFFF"
+# )
+```
+
+## Referência
+
+.pull-left[
+
+```{r echo=FALSE, out.width="60%"}
+knitr::include_graphics("https://r4ds.hadley.nz/cover.png")
+```
+
+]
+
+.pull-right[
+
+- Livro: R para Ciência de Dados
+
+- Apresentação baseada na [2 edição do livro](https://r4ds.hadley.nz/index.html) (está em processo de escrita)
+
+- Capítulos:
+
+  - [Workflow: Basics](https://r4ds.hadley.nz/workflow-basics.html)
+  
+  - [Workflow: Pipes](https://r4ds.hadley.nz/workflow-pipes.html)
+  
+  - [Workflow: Scripts](https://r4ds.hadley.nz/workflow-scripts.html)
+  
+  - [Workflow: Projects](https://r4ds.hadley.nz/workflow-projects.html)
+  
+]
+
+---
+class: middle, center, inverse
+
+## Workflow: Basics
+
+
+---
+class: middle, center, inverse
+
+## Workflow: Pipes
+
+---
+class: middle, center, inverse
+
+## Workflow: Scripts
+
+
+---
+class: middle, center, inverse
+
+## Workflow: Projects
+
+---
+### Projetos
+
+- O que você salvaria como o último registro do que aconteceu na análise?
+
+- Onde a nossa análise "vive"? 
+
+--
+
+- Scripts x Environment
+  - É muito mais fácil recriar os objetos do Environment a partir dos códigos que escrevemos no script do que o contrário.
+  
+---
+### Boas práticas
+
+.pull-left[
+Configure o RStudio para não salvar o workspace entre as sessões:
+
+Tools > Global Options >  ...
+
+```{r echo=FALSE, out.width="70%"}
+knitr::include_graphics("https://r4ds.hadley.nz/screenshots/rstudio-workspace.png")
+```
+
+
+]
+
+.pull-right[
+
+- Ao reiniciar o RStudio e a sessão do R, o Workspace será limpo. 
+
+- Isso nos obriga a registrar todas as etapas importantes no código.
+
+Recomendo a leitura: [Capítulo .RData e .Rhistory, livro Zen do R](https://curso-r.github.io/zen-do-r/rdata-rhistory.html)
+
+
+]
+
+---
+
+### Onde as análises vivem?
+
+- **Working directory/diretório de trabalho**: é o lugar (uma pasta no computador) onde o R irá procurar pelos arquivos quando queremos importá-los, ou onde ele irá salvar os arquivos quando queremos exportá-los.
+
+--
+
+Como saber qual é o diretório de trabalho atual?
+
+- Olhando o console;
+
+- Usando a função `getwd()`:
+
+```{r}
+getwd() # para saber qual é o diretório de trabalho
+```
+
+
+Também existe a função `setwd()` para mudar o diretório de trabalho, mas isso **não é recomendado**!
