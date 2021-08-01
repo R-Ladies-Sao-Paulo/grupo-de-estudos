@@ -1,0 +1,232 @@
+---
+title: "Transformação de Dados"
+subtitle: "Capítulo 5 - R para Ciência de Dados"  
+author: 
+  - "Angélica Custódio e Jean Prado"
+  - "Grupo de Estudos - R-Ladies São Paulo"
+date: '4 de agosto de 2021'
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+    nature:
+      slideNumberFormat: "%current%"
+      highlightStyle: github
+      highlightLines: true
+      ratio: 16:9
+      countIncrementalSlides: true
+---
+
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+knitr::opts_chunk$set(
+  fig.width=9, fig.height=3.5, fig.retina=3,
+  out.width = "100%",
+  fig.align = "center",
+  cache = FALSE,
+  echo = TRUE,
+  message = FALSE, 
+  warning = FALSE,
+  fig.show = TRUE,
+  hiline = TRUE
+)
+```
+
+```{css echo=FALSE}
+.remark-slide-content{
+  font-size: 1.2rem;
+}
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+# library(xaringanthemer)
+# style_duo_accent(
+#   primary_color = "#88398a",
+#   secondary_color = "#9c6fb6",
+#   inverse_header_color = "#FFFFFF"
+# )
+```
+
+## Referência
+
+.pull-left[
+
+```{r echo=FALSE, out.width="60%"}
+knitr::include_graphics("https://r4ds.hadley.nz/cover.png")
+```
+
+]
+
+.pull-right[
+
+- Livro: [R para Ciência de Dados](https://r4ds.had.co.nz/index.html)
+
+- Capítulo: [Data Transformation](https://r4ds.had.co.nz/transform.html), incluindo os verbos principais do dplyr, como:
+  - `filter()`
+  - `arrange()`
+  - `select()`
+  - `mutate()`
+  - `group_by()`
+  - `summarise()`
+  
+]
+
+---
+class: middle, center, inverse
+
+## Transformação de dados
+
+---
+
+## Transformando dados
+
+Visualização é importante, mas raramente os dados vão estar **exatamente** do jeito que você precisa. Para isso, existe o pacote `dplyr` – uma gramática para transformação de dados.
+
+--
+
+As principais funções não chamam "verbos" por acaso – cada uma define uma ação específica para lidar com bases de dados:
+
+--
+
+- `select()` seleciona variáveis a partir do nome;
+
+--
+
+- `filter()` filtra linhas a partir dos valores;
+
+--
+
+- `arrange()` altera a ordem das linhas;
+
+--
+
+- `mutate()` cria variáveis novas a partir de colunas já existentes;
+
+--
+
+- `summarise()` resume múltiplos valores em menos linhas.
+
+--
+
+E o último, `group_by()`, os ajuda a operar "por grupos" – vamos explicar melhor mais a frente.
+
+---
+
+## Gramática do `dplyr`
+
+Com as principais funções, você consegue **dividir em passos** o que precisa fazer com o _dataset_. É como usar os verbos da gramática para construir uma frase, como o que você está lendo agora.
+
+--
+
+Por exemplo, se você precisa descobrir **quais voos da companhia American Airlines tiveram o maior tempo de atraso**, consegue separar essa pergunta em diferentes etapas:
+
+--
+
+1. *quais voos da companhia American Airlines*: **filtrar** voos da AA
+
+--
+
+2. *tiveram o maior tempo de atraso*: **ordenar** pelo tempo de atraso
+
+--
+
+Um bom exercício nas etapas de tranformação de dados é pensar como os diferentes verbos do dplyr podem atender as diversas operações que você precisa fazer.
+
+---
+
+## Gramática do `dplyr`: verbos
+
+Cada verbo é uma função diferente, mas com funcionamento similar:
+
+--
+
+1. O primeiro argumento é o _data frame_ a ser **transformando**
+
+--
+
+2. Os próximos argumentos descrevem **o que fazer** com o _data frame_. Aqui, o nome das colunas **não precisa** de aspas
+
+--
+
+3. O resultado é o _data frame_ transformado
+
+--
+
+Em pseudo-código, assumindo que estamos trabalhando com o _dataset_ `voos`, daria para escrever:
+
+--
+
+1. `filtrar(voos, companhia_aerea == "American Airlines")`
+
+--
+
+2. `ordenar(voos, atraso_saida)`
+
+---
+
+## Gramática do `dplyr`: pipe
+
+Como cada verbo gera um novo dataframe, seria pouco eficiente armazenar o resultado das funções em diferentes objetos, certo?
+
+--
+
+Exemplo:
+
+`voos_aa <- filtrar(voos, companhia_aerea == "American Airlines")`
+
+--
+
+`voos_atraso <- ordenar(voos_aa, atraso_saida)`
+
+--
+
+Para isso existe o **operador pipe** `%>%`, que passa o resultado da função anterior como primeiro argumento da próxima função, sem precisar de um novo objeto para isso.
+
+---
+
+## Gramática do `dplyr`: pipe
+
+Na prática, o **pipe** funciona assim:
+
+```{r echo=FALSE, out.width="60%"}
+knitr::include_graphics("https://rstudio-education.github.io/tidyverse-cookbook/images/dplyr-pipe.png")
+```
+--
+
+Usando nosso exemplo anterior, ficaria assim:
+
+<span style="color:#5457E0">voos</span> %>%
+  <span style="color:#489EFA">filtrar(companhia == "American Airlines")</span> %>%
+  <span style="color:#AA53F5">ordenar(atraso_saida)</span>
+
+--
+
+No lugar de:
+
+<span style="color:#AA53F5">ordenar(<span style="color:#489EFA">filtrar(<span style="color: #5457E0">voos</span>, companhia == "American Airlines")</span>, atraso_saida)</span>
+
+---
+
+## Antes de seguir em frente...
+
+- o processo de transformação de dados pode ficar complicado muito rápido, ainda mais quando não estamos trabalhando com **dados fora do formato _tidy_** ([leia mais aqui](https://r4ds.had.co.nz/tidy-data.html))
+
+--
+
+- essa parte do livro tem o objetivo de **dar uma visão geral** sobre esse processo, focando nos principais operadores do `dplyr`, mas existem milhares de outras funções (dentro e fora do `tidyverse`) que ajudam nesse processo
+
+--
+
+- é bem comum se sentir sobrecarregade com os vários passos e possibilidades. a próxima seção do livro, **Wrangle**, mergulha nesse universo com mais detalhe. ainda assim, a prática é a sua melhor amiga para dar mais segurança nesse processo :) 
+
+---
+
+class: middle, center, inverse
+
+# Principais verbos
+## filter()
+
+---
+
+## `filter()`: o básico
+
+lalala
