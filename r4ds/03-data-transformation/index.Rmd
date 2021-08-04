@@ -926,6 +926,8 @@ Cuidado! Para algumas medidas faz sentido (soma), mas para outras não (mediana)
 
 ## `group_by()`: `ungroup()`
 
+Se quisermos desagrupar para fazer um `summarise()`.
+
 ```{r}
 diario<- dplyr::group_by(dados::voos, ano, mes, dia)
 
