@@ -1,6 +1,6 @@
 ---
 title: "Transformação de Dados"
-subtitle: "Capítulo 5 - R para Ciência de Dados"  
+subtitle: "R para Ciência de Dados"  
 author: 
   - "Angélica Custódio e Jean Prado"
   - "Grupo de Estudos - R-Ladies São Paulo"
@@ -29,6 +29,19 @@ knitr::opts_chunk$set(
   fig.show = TRUE,
   hiline = TRUE
 )
+
+# instala pacotes necessários
+if (!require("emo")) remotes::install_github("hadley/emo")
+if (!require("emo")) remotes::install_github("cienciadedatos/dados")
+
+pkg <- c("dplyr", "magrittr", "stringr")
+
+pkg_install <- pkg[!(pkg %in% installed.packages()[,"Package"])]
+
+if(length(pkg_install)) install.packages(pkg_install)
+
+# carrega o pipe
+`%>%` <- magrittr::`%>%`
 ```
 
 ```{css echo=FALSE}
@@ -218,6 +231,16 @@ No lugar de:
 
 - é bem comum se sentir sobrecarregade com os vários passos e possibilidades. a próxima seção do livro, **Wrangle**, mergulha nesse universo com mais detalhe. ainda assim, a prática é a sua melhor amiga para dar mais segurança nesse processo :) 
 
+--
+
+- os _datasets_ usados nessa apresentação fazem parte do [pacote dados](https://github.com/cienciadedatos/dados), como o `dados::voos`, que é tradução do `nycflights13`, que reune os voos de NYC em 2013.
+
+---
+
+class: middle, center, inverse
+
+# Principais verbos
+
 ---
 
 class: middle, center, inverse
@@ -227,6 +250,438 @@ class: middle, center, inverse
 
 ---
 
-## `filter()`: o básico
+## `filter()`: introdução
 
-lalala
+A função `filter()`, como o nome já diz, filtra as linhas a partir de seus valores e retorna um novo _dataset_ que atendem aos requisitos.
+
+--
+
+O primeiro argumento é o _dataset_ e os outros argumentos são expressões lógicas para filtrar os dados. A função abaixo retorna **todos os voos do dia 6 de junho**.
+
+--
+
+```{r eval=FALSE}
+filter(dados::voos, mes == 6, dia == 6)
+```
+
+--
+
+Você pode salvar os resultados em um novo _dataset_ atribuindo a um novo objeto com `<-`:
+
+--
+
+```{r eval=FALSE}
+voos_6_junho <- filter(dados::voos, mes == 6, dia == 6)
+```
+
+--
+
+A função `filter()` não altera os valores do dataset, apenas remove as linhas que não resultam em `TRUE`.
+
+---
+
+## `filter()`: operadores relacionais
+
+A mágica do `filter()` vem quando você tem fluência dos operadores que avaliam os valores das colunas.
+
+--
+
+Os **operadores relacionais** comparam o quanto os valores estão dentro do intervalo esperado, a partir das expressões:
+
+--
+
+- `>` maior que
+
+--
+
+- `>=` maior ou igual
+
+--
+
+- `<` menor que
+
+--
+
+- `<=` menor ou igual
+
+--
+
+- `!=` diferente
+
+--
+
+- `==` igual (cuidado com `=`, que não deve ser usado para isso)
+
+---
+
+## `filter()`: operadores relacionais
+
+Ou seja, para filtrar voos que saíram com 1 hora ou mais de atraso:
+
+```{r eval=FALSE}
+dplyr::filter(dados::voos, atraso_saida >= 60)
+```
+
+--
+
+Ou voos que saíram adiantados (atraso de saída menor que zero):
+
+```{r eval=FALSE}
+dplyr::filter(dados::voos, atraso_saida < 0)
+```
+
+--
+
+Ou voos que saíram exatamente no horário:
+
+```{r eval=FALSE}
+dplyr::filter(dados::voos, atraso_saida == 0)
+```
+
+---
+
+## `filter()`: operadores lógicos
+
+Para combinar múltiplas avaliações, é só usar operadores lógicos (ou booleanos), que esse diagrama resume:
+
+```{r echo=FALSE, out.width="70%"}
+knitr::include_graphics("https://d33wubrfki0l68.cloudfront.net/01f4b6d39d2be8269740a3ad7946faa79f7243cf/8369a/diagrams/transform-logical.png")
+```
+
+---
+
+## `filter()`: operadores lógicos
+
+Ou seja, para filtrar voos que saíram com mais de 1 hora de atraso, mas não atrasaram na chegada, você pode usar tanto:
+
+--
+
+```{r eval=FALSE}
+dplyr::filter(dados::voos, atraso_saida >= 60, atraso_chegada <= 0)
+```
+
+quanto:
+
+--
+
+```{r eval=FALSE}
+dplyr::filter(dados::voos, atraso_saida >= 60 & atraso_chegada <= 0)
+```
+
+--
+
+(espero que todes desses voos tenham chego bem.)
+
+---
+
+## `filter()`: outras funções úteis
+
+Além de operadores, você também pode usar outras funções lógicas (ou seja, que retornam `TRUE` ou `FALSE`) dentro do `filter()`, como:
+
+--
+
+**`near()`**
+
+funciona como o `==` para comparar valores, mas têm mais tolerância números "próximos" (a partir da 8ª casa decimal)
+
+--
+
+```{r}
+sqrt(2) ^ 2 == 2
+```
+
+--
+
+```{r}
+dplyr::near(sqrt(2) ^ 2, 2)
+```
+
+---
+
+## `filter()`: outras funções úteis
+
+**`between()`**
+
+um atalho para `x >= ___ & x <= ___`, como:
+
+--
+
+```{r}
+dplyr::filter(dados::voos, dplyr::between(mes, 1, 6))
+```
+
+(filtrando para voos do primeiro semestre, ou seja, do mês 1 ao 6)
+
+---
+
+## `filter()`: outras funções úteis
+
+**`is.na()`**
+
+encontra valores faltando (nulos)
+
+--
+
+```{r eval=FALSE}
+dplyr::filter(dados::voos, is.na(atraso_saida))
+```
+
+--
+
+**`!is.na()`**
+
+também pode ser combinada com o operador de negação `!` para excluir valores nulos
+
+--
+
+```{r eval=FALSE}
+dplyr::filter(dados::voos, !is.na(atraso_saida))
+```
+
+---
+
+## `filter()`: outras funções úteis
+
+**`%in%`**
+
+encontra linhas com alguns dos valores listados (não precisa ser todos)
+
+--
+
+```{r eval=FALSE}
+dplyr::filter(dados::voos, origem %in% c("LAX", "SDF"))
+```
+
+--
+
+é mais eficiente que:
+
+```{r eval=FALSE}
+dplyr::filter(dados::voos, origem == "LAX" | origem == "SDF"))
+```
+
+---
+
+## `filter()`: outras funções úteis
+
+**`str_detect()`**
+
+detecta padrões em texto (strings) e pode ser usado com expressões regulares (regex)
+
+--
+
+```{r eval=FALSE}
+dplyr::filter(dados::voos, stringr::str_detect(cauda, "^N7"))
+```
+
+(esse código encontra o registro de aeronaves (tail number) que começa com `N7`)
+
+---
+
+## `filter()`: cuidados
+
+- `=` não é `==` (para filtros, sempre é o último)
+
+--
+
+- qualquer comparação com `NA` retorna `NA`
+
+--
+
+- parênteses para combinar operadores
+
+---
+
+class: middle, center, inverse
+
+# Principais verbos
+## arrange()
+
+---
+
+## `arrange()`: introdução
+
+O `arrange()` também opera nas linhas, mas em vez de filtrar os valores, ele muda a ordem com base nos valores do _dataset_. O primeiro argumento é o nome do _dataset_ e os outros são as colunas para ordenar, em ordem de "prioridade".
+
+--
+
+É útil se você precisa conferir as linhas em ordem a partir de um valor, como **os voos que mais saíram adiantado**:
+
+--
+
+```{r eval=FALSE}
+dplyr::arrange(dados::voos, atraso_saida)
+```
+
+por padrão, o `arrange()` ordena de forma crescente
+
+---
+
+## `arrange()`: introdução
+
+se você quiser filtrar voos que **mais atrasaram**, pode recorrer a função `desc()` ou `-`:
+
+--
+
+```{r eval=FALSE}
+dplyr::arrange(dados::voos, dplyr::desc(atraso_saida))
+```
+
+--
+
+(imagina que ruim estar no voo que atrasou 14 horas...)
+
+---
+
+## `arrange()`: dicas
+
+- não altera a ordem de como as variáveis categoricas aparecem no `ggplot2`. para isso, consulte o pacote [`forcats`](https://forcats.tidyverse.org/)
+
+--
+
+- quando há valores faltando (`NA`), eles sempre ficam no final do _dataset_
+
+--
+
+- é útil quando a ordem importa. por exemplo, com a função `distinct()` ou `coalesce()`
+
+---
+
+class: middle, center, inverse
+
+# Principais verbos
+## select()
+
+---
+
+## `select()`: introdução
+
+Essa função, ao contrário das duas últimas, não olha os valores (linhas) e sim as **colunas**. o primeiro argumento é o _dataset_ e os outros são as colunas para serem selecionadas.
+
+--
+
+Útil para reduzir _datasets_ de centenas de colunas em apenas algumas que são interessantes para você. e ainda ajuda a economizar memória RAM `r emo::ji("smile")`
+
+--
+
+```{r}
+dplyr::select(dados::voos, ano, companhia_aerea, origem, destino)
+```
+
+---
+
+## `select()`: operadores
+
+**`:`**
+
+seleciona todas as colunas entre `x` e `y`:
+
+--
+
+```{r}
+dplyr::select(dados::voos, voo:tempo_voo) %>% colnames()
+```
+
+--
+
+**`-`**
+
+exclui determinada(s) coluna(s)
+
+--
+
+```{r}
+dplyr::select(dados::voos, -ano, -mes, -dia) %>% colnames()
+```
+
+---
+
+## `select()`: operadores
+
+ambos podem ser combinados:
+
+```{r}
+dplyr::select(dados::voos, -(horario_saida:companhia_aerea)) %>% colnames()
+```
+
+---
+
+## `select()`: tidyselect
+
+pacote que traz uma série de funções para filtrar colunas, como:
+
+**`starts_with`** ou **`ends_with`**
+
+seleciona colunas que começam ou terminam com uma certa expressão, como:
+
+--
+
+```{r}
+dplyr::select(dados::voos, tidyselect::starts_with("horario")) %>% colnames()
+```
+
+ou
+
+--
+
+```{r}
+dplyr::select(dados::voos, tidyselect::ends_with(c("chegada", "saida"))) %>% colnames()
+```
+
+---
+
+## `select()`: tidyselect
+
+**contains** ou **matches**
+
+avalia se no nome da coluna contém um determinado padrão. enquanto **contains** é literal, **matches** usa regex
+
+--
+
+--
+
+```{r}
+dplyr::select(dados::voos, tidyselect::contains("voo")) %>% colnames()
+```
+
+ou
+
+--
+
+```{r}
+dplyr::select(dados::voos, tidyselect::matches("chegada$")) %>% colnames()
+```
+
+---
+
+## `select()`: tidyselect
+
+**everything**
+
+seleciona todas as outras colunas. se usada depois de outras seleções, as colunas que não foram retornadas nas primeiras são incluídas
+
+--
+
+```{r}
+dplyr::select(dados::voos, voo, tidyselect::everything()) %>% colnames()
+```
+
+---
+
+## `select()`: renomear
+
+o `select()` também consegue renomear colunas, mas não é o ideal, porque ele exclui todas as outras colunas
+
+--
+
+```{r}
+dplyr::select(dados::voos, registro_aviao = cauda) %>% colnames()
+```
+
+nesses casos, o ideal é usar a função `rename()`:
+
+--
+
+```{r}
+dplyr::rename(dados::voos, registro_aviao = cauda) %>% colnames()
+```
