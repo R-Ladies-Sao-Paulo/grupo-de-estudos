@@ -685,3 +685,252 @@ nesses casos, o ideal é usar a função `rename()`:
 ```{r}
 dplyr::rename(dados::voos, registro_aviao = cauda) %>% colnames()
 ```
+
+---
+
+class: middle, center, inverse
+
+# Principais verbos
+## mutate()
+
+---
+
+## `mutate()`: introdução
+
+Essa função, assim como o `select()`,  faz operações no sentido de **colunas**, não de **linhas**. 
+
+O `mutate()` é utilizado para adicionar novas colunas ao final do _dataset_, preservando as que já existem.O primeiro argumento é o _dataset_ e os outros são as colunas que serão criadas.
+
+
+
+```{r}
+dados_dist_atraso <- dplyr::select(dados::voos,distancia , tempo_voo, atraso_chegada, atraso_saida)
+
+dplyr::mutate(dados_dist_atraso,
+              velocidade = distancia/tempo_voo,
+              difatraso = atraso_chegada-atraso_saida) 
+```
+
+---
+
+## `mutate()`: introdução
+
+É possível fazer referência as novas colunas criadas:
+
+```{r}
+
+dplyr::mutate(dados_dist_atraso,
+              difatraso = atraso_chegada-atraso_saida,
+              dif_prop = abs(difatraso/tempo_voo))
+```
+
+---
+
+## `mutate()`: funções
+
+
+Existem várias funções que podemos utilizar para criar novas variáveis. Para isso é importante pontuarmos alguns operadores principais:
+
+- Operadores aritméticos: `+`,`-`, `*`, `/`, `^`
+
+- Aritmética modular: `%/%` (divisão inteira) e `%%` (resto)
+
+- Logaritmo: `log()`, `log2()`, `log10()`
+
+- Cumulativos de somas, produtos, mínimos e máximos: `cumsum()`, `cumprod()`, `cummin()`, `cummax()`
+
+- Comparações lógicas: `<`, `<=`, `>`, `>=`, `!=` e `==`
+
+---
+
+## `mutate()`: `case_when()`
+
+Esta função permite vetorizar várias instruções `if_else()`. É equivalente à função com o mesmo nome no SQL. 
+
+Se nenhum caso coincidir com as instruções especificadas, _NA_ é retornado.
+
+```{r}
+dados::voos %>% 
+  dplyr::select(atraso_chegada)  %>% 
+  dplyr::mutate(atraso = dplyr::case_when(atraso_chegada <= 0 ~ "sem atraso",
+                        atraso_chegada <= 10  ~ "pequeno",
+                        atraso_chegada <= 20  ~ "médio",
+                        atraso_chegada > 20  ~ "alto"))
+```
+
+---
+
+class: middle, center, inverse
+
+# Principais verbos
+## summarise()
+
+---
+
+## `summarise()`: introdução
+
+
+O último verbo é utilizado para resumir informações a depender das especificações contidas nela. O primeiro argumento é o _dataset_ e os outros são as variáveis resumo que serão criadas a partir das variáveis existentes no _dataset_.
+
+
+```{r}
+dados::voos %>%
+  dplyr::summarise(count = dplyr::n(),
+                   dist = mean(distancia, na.rm = TRUE),
+                   atraso = mean(atraso_chegada, na.rm = TRUE))
+
+```
+
+`na.rm` indica se os valores de NA devem ser removidos antes que o cálculo continue.
+
+---
+
+## `summarise()`: introdução
+
+Essa função cria um novo _dataset_.
+
+`summarise()` e `summarize()` são sinônimos.
+
+Existem várias possibilidades de funções para criarmos medidas descritivas.
+
+---
+
+## `summarise()`: funções
+
+Algumas medidas são:
+
+- Medidas resumo: média  `mean(x)`, mediana `median(x)`.
+
+- Medidas de dispersão: desvio padrão `sd(x)`, desvio médio absoluto `mad(x)`.
+
+- Medidas de classificação: mínimo `min(x)`, quantis `quantile(x, 0.25)`, máximo `max(x)`.
+
+- Medidas de posição:  `first(x)`, `nth(x, 2)`, `last(x)`.
+
+- Contadores: tamanho do grupo `n()`, número de não missing `sum(!is.na(x))`, valores distintos `n_distinct(x)`.
+
+---
+
+## `summarise()`: funções
+
+```{r}
+nao_cancelados <- dados::voos %>% 
+  dplyr::filter(!is.na(atraso_chegada), !is.na(atraso_saida))
+
+nao_cancelados %>%
+  dplyr::summarise(mais_adiantado = min(atraso_chegada),
+                   qt_25= quantile(atraso_chegada, 0.25),
+                   mediana=median(atraso_chegada),
+                   qt_75= quantile(atraso_chegada, 0.75),
+                   mais_atrasado = max(atraso_chegada))
+
+```
+
+
+
+---
+
+## `summarise()`: agrupado
+
+
+A função `summarise()` é bastante utilizada com a próxima função que veremos: `group_by()`. Quando combinadas, elas retornam resumos agrupados das colunas de interesse.
+
+```{r eval=FALSE}
+atrasos <- dados::voos %>%
+  dplyr::group_by(destino) %>% 
+  dplyr::summarise(
+    count = dplyr::n(),
+    dist = mean(distancia, na.rm = TRUE),
+    atraso = mean(atraso_chegada, na.rm = TRUE)
+  )
+```
+
+
+---
+
+class: middle, center, inverse
+
+# Um aliado poderoso:
+## group_by()
+
+---
+
+## `group_by()`: introdução
+
+Pode ser usado na preparação da base de dados para utilizar verbos como  `summarise()`, `mutate()` e `filter()`.
+
+A função `group_by()` utiliza um _dataset_ existente e o converte em um agrupado, no qual as operações serão realizadas **por grupo**. 
+
+As operações serão feitas pelos **grupos das variáveis definidos**, mas vale lembrar que essa função não é um verbo, ela não executa nada, é como se carimbasse o _dataset_. 
+
+`ungroup()` remove o agrupamento.
+
+---
+
+## `group_by()`: introdução
+
+Como calculamos a quantidade de voos de cada destino?
+
+```{r}
+dados::voos %>%
+  dplyr::group_by(destino) %>%
+  head(5)
+```
+
+---
+
+## `group_by()`: introdução
+
+Como calculamos a quantidade de voos de cada destino?
+
+```{r}
+dados::voos %>%
+  dplyr::group_by(destino) %>% 
+  dplyr::summarise(
+    count = dplyr::n()) %>%
+  head(5)
+```
+
+
+---
+
+## `group_by()`: multiplas variáveis
+
+Como calculamos a quantidade de voos por dia?
+
+```{r}
+diario<- dplyr::group_by(dados::voos, ano, mes, dia)
+
+(por_dia   <- dplyr::summarise(diario, 
+                               qtde_voos = dplyr::n()))
+```
+
+
+---
+
+## `group_by()`: multiplas variáveis
+
+Como calculamos a quantidade de voos por mês?
+
+```{r eval=FALSE}
+(mensal <- dplyr::summarise(por_dia, 
+                            qtde_voos = sum(qtde_voos)))
+```
+
+Quando você agrupa por várias variáveis, cada `summarise()` **descola um nível do agrupamento**.
+
+Cuidado! Para algumas medidas faz sentido (soma), mas para outras não (mediana).
+
+
+---
+
+## `group_by()`: `ungroup()`
+
+```{r}
+diario<- dplyr::group_by(dados::voos, ano, mes, dia)
+
+diario %>% 
+  dplyr::ungroup() %>%            
+  dplyr::summarise(qtde_voos = dplyr::n())
+```
+
